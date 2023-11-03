@@ -41,9 +41,79 @@
  */
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const fs = require("fs").promises
 const app = express();
-
+const { 
+  v1: uuidv1,
+  v4: uuidv4,
+} = require('uuid');
 app.use(bodyParser.json());
 
+
 module.exports = app;
+
+const port = 3000
+
+app.listen(port,()=>{
+  console.log(`SERVER STARTED AT ${port}`)
+})
+
+app.get("/todos",async (req,res)=>{
+  const todoListJson = await fs.readFile("./todoList.json")
+  const todoList = JSON.parse(todoListJson)
+  res.status(200).send(todoList)
+})
+
+app.get("/todos/:id",async (req, res)=>{
+  const todoListJson = await fs.readFile("./todoList.json")
+  const todoList = JSON.parse(todoListJson)
+  const requestedTodoId =  req.params.id
+  const requestedTodo  = todoList.filter((todo)=>todo["id"] === requestedTodoId)
+  if(requestedTodo.length>0){
+    res.status(200).send(requestedTodo)
+  }
+  else{
+    res.status(404).send()
+  }
+})
+
+app.post("/todos",async (req,res)=>{
+  const todoListJson = await fs.readFile("./todoList.json")
+  const todoList = JSON.parse(todoListJson)
+  const newTodoTitle = req.body.title
+  const newTodoDescription = req.body.description
+  const newTodoItem = {"id": `${uuidv4()}` ,title:newTodoTitle, description: newTodoDescription ,"completed": false}
+  todoList.push(newTodoItem)
+  await fs.writeFile("./todoList.json",JSON.stringify(todoList))
+  res.status(201).send({id:newTodoItem.id})
+})
+
+app.put("/todos/:id",async(req,res)=>{
+  const todoListJson = await fs.readFile("./todoList.json")
+  const todoList = JSON.parse(todoListJson)
+  const todoIdToUpdate = req.params.id
+  for(let i = 0; i<todoList.length;i++){
+    const crrTodoItem = todoList[i]
+    if( crrTodoItem["id"] === todoIdToUpdate){
+      todoList[i] = {...crrTodoItem, ...req.body}
+      await fs.writeFile("./todoList.json",JSON.stringify(todoList))
+      res.status(200).send("OK")
+      break
+    }
+  }
+  res.status(404).send("NOT FOUND")
+})
+
+app.delete("/todos/:id", async(req, res)=>{
+  const todoListJson = await fs.readFile("./todoList.json")
+  const todoList = JSON.parse(todoListJson)
+  const requestedDeleteTodoId = req.params.id
+  const updatedTodoList = todoList.filter((todo)=>todo.id !== requestedDeleteTodoId)
+  if(updatedTodoList.length === todoList.length){
+    res.status(404).send()
+  }
+  else{
+    await fs.writeFile("./todoList.json",JSON.stringify(updatedTodoList))
+    res.status(200).send("OK")
+  }
+})

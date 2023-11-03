@@ -21,5 +21,16 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
+const port = 3000
+
+app.listen(port,()=>{
+  console.log(`SERVER STARTED AT ${port}`)
+})
+
+app.get("/files",async (req,res)=>{
+  const fileList = await fs.promises.readdir("./files")
+  console.log(fileList)
+  res.status(201).send()
+})
 
 module.exports = app;
