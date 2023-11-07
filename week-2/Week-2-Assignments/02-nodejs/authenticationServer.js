@@ -29,9 +29,71 @@
   Testing the server - run `npm run test-authenticationServer` command in terminal
  */
 
-const express = require("express")
+const express = require("express");
 const PORT = 3000;
 const app = express();
+const bodyParser = require("body-parser");
+
+const { v1: uuidv1, v4: uuidv4 } = require("uuid");
 // write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
+
+app.listen(PORT, () => {
+  console.log(`listening on port ${PORT}`);
+});
+
+app.use(bodyParser.json());
+
+const userList = [];
+
+app.post("/signup", (req, res) => {
+  const {
+    body: { firstName, lastName, userName, password },
+  } = req;
+
+  const userNameAlreadyExists =
+    userList.filter(({ userName: crrUserName }) => crrUserName === userName)
+      .length > 0;
+
+  if (userNameAlreadyExists) {
+    res.status(400).send("ACCOUNT ALREADY EXISTS");
+  } else {
+    const requestedNewUser = {
+      id: uuidv4(),
+      firstName,
+      lastName,
+      userName,
+      password,
+    };
+    userList.push(requestedNewUser);
+
+    res.status(201).send("ACCOUNT CREATED");
+  }
+});
+
+app.post("/login", (req, res) => {
+  const { userName, password } = req.body;
+
+  const requestedUser = userList.filter(
+    ({ userName: crrUserName, password: crrPassword }) =>
+      userName === crrUserName && password === crrPassword
+  );
+
+  if (requestedUser.length > 0) {
+    res.status(201).send(requestedUser);
+  } else {
+    res.status(400).send("UNAUTHORIZED");
+  }
+});
+
+app.get("/data", (req, res) => {
+  const { userName, password } = req.headers;
+  const isValidReq = userList.filter(
+    ({ userName: crrUserName, password: crrUserPassword }) =>
+      userName === crrUserName && crrUserPassword === password
+  );
+  if (isValidReq) {
+    res.status(200).send(JSON.stringify(userList));
+  }
+});
 
 module.exports = app;

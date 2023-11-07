@@ -29,8 +29,24 @@ app.listen(port,()=>{
 
 app.get("/files",async (req,res)=>{
   const fileList = await fs.promises.readdir("./files")
-  console.log(fileList)
-  res.status(201).send()
+
+  res.status(201).send(JSON.stringify(fileList))
+})
+
+app.get("/files/:fileName", async(req, res)=>{
+  const requestedFileName = req.params.fileName
+  try{
+    const todoListJson = await fs.promises.readFile(`./files/${requestedFileName}`)
+    res.status(201).send(JSON.stringify(todoListJson))
+  }
+  catch{
+    res.status(404).send("FILE DOES NOT EXIST")
+  }
+  
+})
+
+app.get("*", async(req,res)=>{
+  res.status(404).send("Route does not exist")
 })
 
 module.exports = app;
