@@ -8,6 +8,8 @@ const fs = require("fs");
 const JWT_SECRET_ADMIN = "LEARN";
 const JWT_SECRET_USERS = "LEARN_USERS";
 
+const JWT_EXPIRATION_UNIT = "1hr";
+
 app.use(express.json());
 
 let ADMINS = [];
@@ -23,12 +25,12 @@ const adminAuthentication = async (req, res, next) => {
       if (decoded) {
         const adminData = await readJson("admin");
         const adminCrrAccData = adminData.find(
-          ({ email }) => email === decoded
+          ({ email }) => email === decoded.email
         );
         req.user = adminCrrAccData;
         next();
       } else {
-        throw err;
+        res.status(400).send({ message: "Token is Expired" });
       }
     });
   } catch (err) {
@@ -44,11 +46,13 @@ const userAuthentication = async (req, res, next) => {
     jwt.verify(token, JWT_SECRET_USERS, async (err, decoded) => {
       if (decoded) {
         const usersData = await readJson("users");
-        const userCrrAccData = usersData.find(({ email }) => email === decoded);
+        const userCrrAccData = usersData.find(
+          ({ email }) => email === decoded.email
+        );
         req.user = userCrrAccData;
         next();
       } else {
-        throw err;
+        res.status(400).send({ message: "Token is Expired" });
       }
     });
   } catch (err) {
@@ -85,7 +89,9 @@ app.post("/admin/signup", async (req, res) => {
   } = req;
 
   try {
-    const token = jwt.sign(email, JWT_SECRET_ADMIN);
+    const token = jwt.sign({ email }, JWT_SECRET_ADMIN, {
+      expiresIn: JWT_EXPIRATION_UNIT,
+    });
     const adminAccData = await readJson("admin");
     const doesAccountExist = adminAccData.find(
       ({ email: userEmail }) => email === userEmail
@@ -118,7 +124,9 @@ app.post("/admin/login", async (req, res) => {
       ({ email, password }) => email === crrEmail && password === crrPassword
     );
     const doesAccountExist = adminCrrAccData.length > 0;
-    const token = jwt.sign(crrEmail, JWT_SECRET_ADMIN);
+    const token = jwt.sign({ crrEmail }, JWT_SECRET_ADMIN, {
+      expiresIn: JWT_EXPIRATION_UNIT,
+    });
 
     if (doesAccountExist) {
       res.status(200).send({ message: "Logged in successfully", token });
@@ -184,7 +192,9 @@ app.post("/users/signup", async (req, res) => {
   } = req;
 
   try {
-    const token = jwt.sign(email, JWT_SECRET_USERS);
+    const token = jwt.sign({ email }, JWT_SECRET_USERS, {
+      expiresIn: JWT_EXPIRATION_UNIT,
+    });
     const adminAccData = await readJson("users");
     const doesAccountExist = adminAccData.find(
       ({ email: userEmail }) => email === userEmail
@@ -218,7 +228,9 @@ app.post("/users/login", async (req, res) => {
       ({ email, password }) => email === crrEmail && password === crrPassword
     );
     const doesAccountExist = adminCrrAccData.length > 0;
-    const token = jwt.sign(crrEmail, JWT_SECRET_USERS);
+    const token = jwt.sign({ crrEmail }, JWT_SECRET_USERS, {
+      expiresIn: JWT_EXPIRATION_UNIT,
+    });
 
     if (doesAccountExist) {
       res.status(200).send({ message: "Logged in successfully", token });
