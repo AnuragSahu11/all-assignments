@@ -9,6 +9,21 @@ let ADMINS = [];
 let USERS = [];
 let COURSES = [];
 
+const adminAuthentication = (req, res, next) => {
+  const { email: crrEmail, password: crrPassword } = req.headers;
+
+  const adminCrrAccData = ADMINS.filter(
+    ({ email, password }) => email === crrEmail && password === crrPassword
+  );
+  const doesAccountExist = adminCrrAccData.length > 0;
+
+  if (doesAccountExist) {
+    next();
+  } else {
+    res.status(400).send({ message: "User is not Admin" });
+  }
+};
+
 // Admin routes
 app.post("/admin/signup", (req, res) => {
   // logic to sign up admin
@@ -38,7 +53,7 @@ app.post("/admin/login", (req, res) => {
   }
 });
 
-app.post("/admin/courses", (req, res) => {
+app.post("/admin/courses", adminAuthentication, (req, res) => {
   // logic to create a course
   const { email, password } = req.headers;
   const { title, description, price, imageLink, published } = req.body;
@@ -51,7 +66,7 @@ app.post("/admin/courses", (req, res) => {
     .send({ message: "Course created successfully", courseId: newId });
 });
 
-app.put("/admin/courses/:courseId", (req, res) => {
+app.put("/admin/courses/:courseId", adminAuthentication, (req, res) => {
   // logic to edit a course
   const keysToUpdate = Object.keys(req.body);
   const { courseId } = req.params;
@@ -63,7 +78,7 @@ app.put("/admin/courses/:courseId", (req, res) => {
   res.status(200).send({ message: "Course updated successfully" });
 });
 
-app.get("/admin/courses", (req, res) => {
+app.get("/admin/courses", adminAuthentication, (req, res) => {
   // logic to get all courses
   res.status(200).send(COURSES);
 });
