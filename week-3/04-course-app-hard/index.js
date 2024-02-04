@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
 const mongoConnectionURI =
   "mongodb+srv://coolanuragsahu9:321321@course-app.mdhrqof.mongodb.net/CourseApp";
@@ -8,6 +9,7 @@ const mongoConnectionURI =
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 const JWT_SECRET_ADMIN = "SECRET_ADMIN";
 const JWT_SECRET_USERS = "SECRET_USERS";
